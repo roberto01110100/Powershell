@@ -89,6 +89,6 @@ if (Test-Path $csvFilePath) {
 Write-Host "Exporting user details to AdResults.txt..."
 Get-ADUser -Filter * -SearchBase $ouPath -Properties DisplayName, PostalCode, OfficePhone, MobilePhone |
     Select-Object DisplayName, PostalCode, OfficePhone, MobilePhone |
-    Out-File -FilePath .\AdResults.txt
+    Out-File -FilePath "$PSScriptRoot\AdResults.txt"
 
 Write-Host "User details have been successfully exported to 'AdResults.txt'."
