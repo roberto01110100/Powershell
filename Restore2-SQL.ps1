@@ -1,12 +1,12 @@
-# Import SQLServer module
-if (-not (Get-packageprovider -Name NuGet)) {
+# Install SQLServer module if necessary:
+<#if (-not (Get-packageprovider -Name NuGet)) {
 Install-packageProvider -Name NuGet -Force -Confirm:$false
 }
 
 if (-not (Get-Module -ListAvailable -Name SqlServer)) {
 Write-Host "SqlServer module not found. Installing................" -ForegroundColor Yellow
 Install-Module -Name SqlServer -Scope CurrentUser -Force -Allowclobber -Confirm:$false
-}
+} #>
 
 Import-Module SqlServer
 
@@ -116,28 +116,7 @@ try {
 
 # 5. Generate the output file SqlResults.txt
 Write-Host "Generating output file SqlResults.txt..."
-try {
-    $sqlConnection.Open()
-    $sqlCommand = $sqlConnection.CreateCommand()
-    $sqlCommand.CommandText = "SELECT * FROM dbo.Client_A_Contacts"
+Invoke-Sqlcmd -Database TestDB -ServerInstance .\Client1 -Query 'SELECT * FROM dbo.Client_A_Contacts' > "$PSScriptRoot\SqlResults.txt"
 
     # Execute the query and output results to file
-    $reader = $sqlCommand.ExecuteReader()
-    $output = ""
-    while ($reader.Read()) {
-        $row = ""
-        for ($i = 0; $i -lt $reader.FieldCount; $i++) {
-            $row += $reader.GetValue($i) + "`t"
-        }
-        $output += $row + "`n"
-    }
-    $reader.Close()
-
-    # Write the output to a file
-    $output | Out-File "$PSScriptRoot\SqlResults.txt"
-    Write-Host "The output file SqlResults.txt has been generated." -ForegroundColor Green
-    $sqlConnection.Close()
-} catch {
-    Write-Host "An error occurred while generating the output file" -ForegroundColor Red
-    Write-Host "Error details: $_" -ForegroundColor Red
-}
+   
