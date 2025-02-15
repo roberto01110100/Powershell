@@ -1,5 +1,3 @@
-﻿
-
 # Ensure the Active Directory module is loaded
 Import-Module ActiveDirectory
 
@@ -11,33 +9,40 @@ $ouPath = "ou=$ouName,$domain"
 # Use $PSScriptRoot to get the directory where the script is located and construct the CSV file path
 $csvFilePath = Join-Path $PSScriptRoot "\financePersonnel.csv"
 
-
 # Step 1: Check if the Finance Organizational Unit (OU) already exists
 Write-Host "Checking if the '$ouName' Organizational Unit (OU) exists..."
 $existingOU = Get-ADOrganizationalUnit -Filter "Name -eq '$ouName'" -SearchBase $domain -ErrorAction SilentlyContinue
 
 if ($existingOU) {
-    Write-Host "The OU '$ouName' already exists. Deleting it now..."
+    Write-Host "The OU '$ouName' exists." -ForegroundColor Yellow 
     
     # Remove protection against accidental deletion
     try {
         Set-ADOrganizationalUnit -Identity $ouPath -ProtectedFromAccidentalDeletion $false
         
-        # Attempt to remove the OU
+        #Check the Object Items and delete them if necessary
+        $OUObjects = Get-ADObject -Filter {objectclass -eq "user"} -SearchBase $ouPath
+        if ($OUObjects) {
+            foreach ($object in $OUObjects)  {
+                Remove-ADObject -Identity $object.DistinguishedName -Confirm:$false
+            }
+        }
+        # to remove the OU
         Get-ADOrganizationalUnit -Filter {Name -eq "Finance"} | Remove-ADOrganizationalUnit -Confirm:$false
         Write-Host "The '$ouName' OU has been successfully removed."
+
     } catch {
         Write-Host "Error: Unable to remove the '$ouName' OU or disable accidental deletion protection: $_"
     }
 } else {
-    Write-Host "The '$ouName' Organizational Unit does not exist."
+    Write-Host "The '$ouName' Organizational Unit does not exist." -ForegroundColor Yellow
 }
 
+
 # Step 2: Create the Finance Organizational Unit (OU)
-Write-Host "Creating the '$ouName' Organizational Unit..."
 try {
     New-ADOrganizationalUnit -Name $ouName -Path $domain -ErrorAction Stop
-    Write-Host "The '$ouName' OU has been created."
+    Write-Host "The '$ouName' OU has been created." -ForegroundColor Yellow
 } catch {
     Write-Host "Error creating the '$ouName' OU: $_"
 }
